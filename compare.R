@@ -7,8 +7,8 @@ library(ggplot2)
 library(reshape2)
 
 names <- c('SDY', 'VYM')
-group1 <- read.csv('sdy-holdings.tsv', sep = '\t', col.names = c('name', 'percent'), header = FALSE)
-group2 <- read.csv('vym-holdings.tsv', sep = '\t', col.names = c('name', 'percent'), header = FALSE)
+group1 <- read.csv('data/sdy-holdings.tsv', sep = '\t', col.names = c('name', 'percent'), header = FALSE)
+group2 <- read.csv('data/vym-holdings.tsv', sep = '\t', col.names = c('name', 'percent'), header = FALSE)
 
 # Convert percent string to numeric.
 group1$percent <- as.numeric(sub('%', '', group1$percent)) / 100
