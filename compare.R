@@ -84,3 +84,24 @@ plotCommonHoldings <- function(holdingPercents, name1, name2, count = 10) {
 
 plotCommonHoldings(holdingPercents, names[1], names[2])
 plotCommonHoldings(holdingPercents, names[2], names[1])
+
+# Plot dividend difference.
+div1 <- read.csv('data/sdy-dividends.tsv', sep = '\t', col.names = c('ex', 'type', 'amount', 'declaration', 'record', 'payment'), header = FALSE)
+div2 <- read.csv('data/vym-dividends.tsv', sep = '\t', col.names = c('ex', 'type', 'amount', 'declaration', 'record', 'payment'), header = FALSE)
+
+# Remove long-term cap gain payouts.
+div1b <- div1[abs(div1$amount - mean(div1$amount)) < 1,]
+
+div <- data.frame((mean(head(div1b$amount, 6)) / 74.07) * 4 * 100, (mean(head(div2$amount, 6)) / 67.35) * 4 * 100)
+names(div) <- names
+divm <- melt(div)
+
+g <- ggplot(divm, aes(x = variable, y = value))
+g <- g + geom_bar(alpha=I(.9), stat='identity')
+g <- g + ggtitle('Dividend Yield')
+g <- g + theme_bw()
+g <- g + theme(plot.title = element_text(size=20, face="bold", vjust=2), axis.text.x = element_text(angle = 45, hjust = 1))
+g <- g + xlab('ETF')
+g <- g + ylab('Yield')
+g <- g + annotate("text", x = c(1,2), y=c(0.5, 0.5), label = c(paste0(round(div[1,1], 2), '%'), paste0(round(div[1,2], 2), '%')), colour = 'white')
+print(g)
