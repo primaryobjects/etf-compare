@@ -7,8 +7,17 @@ library(ggplot2)
 library(reshape2)
 
 names <- c('SDY', 'VYM')
+
+# Extracted from http://www.etf.com
 group1 <- read.csv('data/sdy-holdings.tsv', sep = '\t', col.names = c('name', 'percent'), header = FALSE)
 group2 <- read.csv('data/vym-holdings.tsv', sep = '\t', col.names = c('name', 'percent'), header = FALSE)
+
+# Extracted from http://www.nasdaq.com/symbol/sdy/dividend-history
+div1 <- read.csv('data/sdy-dividends.tsv', sep = '\t', col.names = c('ex', 'type', 'amount', 'declaration', 'record', 'payment'), header = FALSE)
+div2 <- read.csv('data/vym-dividends.tsv', sep = '\t', col.names = c('ex', 'type', 'amount', 'declaration', 'record', 'payment'), header = FALSE)
+
+# Read current stock prices.
+prices <- read.csv(paste0('http://finance.yahoo.com/d/quotes.csv?s=', paste(names, collapse=','), '&f=snl1'), header = FALSE, col.names=c('symbol', 'name', 'price'))
 
 # Convert percent string to numeric.
 group1$percent <- as.numeric(sub('%', '', group1$percent)) / 100
@@ -85,14 +94,10 @@ plotCommonHoldings <- function(holdingPercents, name1, name2, count = 10) {
 plotCommonHoldings(holdingPercents, names[1], names[2])
 plotCommonHoldings(holdingPercents, names[2], names[1])
 
-# Plot dividend difference.
-div1 <- read.csv('data/sdy-dividends.tsv', sep = '\t', col.names = c('ex', 'type', 'amount', 'declaration', 'record', 'payment'), header = FALSE)
-div2 <- read.csv('data/vym-dividends.tsv', sep = '\t', col.names = c('ex', 'type', 'amount', 'declaration', 'record', 'payment'), header = FALSE)
-
 # Remove long-term cap gain payouts.
 div1b <- div1[abs(div1$amount - mean(div1$amount)) < 1,]
 
-div <- data.frame((mean(head(div1b$amount, 6)) / 74.07) * 4 * 100, (mean(head(div2$amount, 6)) / 67.35) * 4 * 100)
+div <- data.frame((mean(head(div1b$amount, 6)) / prices[1,]$price) * 4 * 100, (mean(head(div2$amount, 6)) / prices[2,]$price) * 4 * 100)
 names(div) <- names
 divm <- melt(div)
 
