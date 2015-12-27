@@ -97,16 +97,23 @@ plotCommonHoldings(holdingPercents, names[2], names[1])
 # Remove long-term cap gain payouts.
 div1b <- div1[abs(div1$amount - mean(div1$amount)) < 1,]
 
-div <- data.frame((mean(head(div1b$amount, 6)) / prices[1,]$price) * 4 * 100, (mean(head(div2$amount, 6)) / prices[2,]$price) * 4 * 100)
-names(div) <- names
-divm <- melt(div)
+div <- data.frame((mean(head(div1b$amount, 3)) / prices[1,]$price) * 4 * 100, (mean(head(div2$amount, 3)) / prices[2,]$price) * 4 * 100, 3)
+div <- rbind(div, c((mean(head(div1b$amount, 6)) / prices[1,]$price) * 4 * 100, (mean(head(div2$amount, 6)) / prices[2,]$price) * 4 * 100, 6))
+div <- rbind(div, c((mean(head(div1b$amount, 12)) / prices[1,]$price) * 4 * 100, (mean(head(div2$amount, 12)) / prices[2,]$price) * 4 * 100, 12))
+names(div) <- c(names, 'range')
 
-g <- ggplot(divm, aes(x = variable, y = value))
-g <- g + geom_bar(alpha=I(.9), stat='identity')
-g <- g + ggtitle('Dividend Yield')
+divm <- melt(div[1:2])
+divm <- cbind(divm, div[,3])
+names(divm) <- c('ETF', 'Yield', 'Range')
+divm$Range <- as.factor(divm$Range)
+
+g <- ggplot(divm, aes(x = ETF, y = Yield, fill = Range))
+g <- g + geom_bar(alpha=I(.9), stat='identity', position='dodge')
+g <- g + ggtitle('Dividend Yield (3, 6, 12 Month)')
 g <- g + theme_bw()
 g <- g + theme(plot.title = element_text(size=20, face="bold", vjust=2), axis.text.x = element_text(angle = 45, hjust = 1))
-g <- g + xlab('ETF')
-g <- g + ylab('Yield')
-g <- g + annotate("text", x = c(1,2), y=c(0.5, 0.5), label = c(paste0(round(div[1,1], 2), '%'), paste0(round(div[1,2], 2), '%')), colour = 'white')
+g <- g + scale_fill_manual(values=c('#303030', '#808080', '#c0c0c0'), labels=c('3', '6', '12'))
+g <- g + annotate("text", x = c(0.7,1.7), y=c(0.5, 0.5), label = c(paste0(round(div[div$range == 3, 1], 2), '%'), paste0(round(div[div$range == 3, 2], 2), '%')), colour = 'white')
+g <- g + annotate("text", x = c(1,2), y=c(0.5, 0.5), label = c(paste0(round(div[div$range == 6, 1], 2), '%'), paste0(round(div[div$range == 6, 2], 2), '%')), colour = 'white')
+g <- g + annotate("text", x = c(1.3,2.3), y=c(0.5, 0.5), label = c(paste0(round(div[div$range == 12, 1], 2), '%'), paste0(round(div[div$range == 12, 2], 2), '%')), colour = 'white')
 print(g)

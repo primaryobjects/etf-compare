@@ -13,6 +13,8 @@ The included charts provide a high-level overview of how similar two ETF funds a
 
 ![Common holdings between VYM and SDY](https://raw.githubusercontent.com/primaryobjects/etf-compare/master/images/plot3.png)
 
+![Dividend yield history over 3, 6, 12 months](https://raw.githubusercontent.com/primaryobjects/etf-compare/master/images/plot4.png)
+
 License
 ----
 
