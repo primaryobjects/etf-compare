@@ -7,13 +7,13 @@ Several graphs are rendered, contrasting the two ETFs. The first graph shows the
 
 The included charts provide a high-level overview of how similar two ETF funds are.
 
-![Percent of common companies between ETFs](https://raw.githubusercontent.com/primaryobjects/etf-compare/master/images/plot1.png)
+![Percent of common companies between ETFs](https://raw.githubusercontent.com/primaryobjects/etf-compare/jnk-vs-hyg/images/plot1.png)
 
-![Common holdings between SDY and VYM](https://raw.githubusercontent.com/primaryobjects/etf-compare/master/images/plot2.png)
+![Common holdings between JNK and HYG (bonds merged by company name)](https://raw.githubusercontent.com/primaryobjects/etf-compare/jnk-vs-hyg/images/plot2.png)
 
-![Common holdings between VYM and SDY](https://raw.githubusercontent.com/primaryobjects/etf-compare/master/images/plot3.png)
+![Common holdings between HYG and JNK (bonds merged by company name)](https://raw.githubusercontent.com/primaryobjects/etf-compare/jnk-vs-hyg/images/plot3.png)
 
-![Dividend yield history over 3, 6, 12 months](https://raw.githubusercontent.com/primaryobjects/etf-compare/master/images/plot4.png)
+![Estimate of energy holdings for JNK vs HYG](https://raw.githubusercontent.com/primaryobjects/etf-compare/jnk-vs-hyg/images/plot4.png)
 
 License
 ----

@@ -6,15 +6,34 @@
 library(ggplot2)
 library(reshape2)
 
-names <- c('SDY', 'VYM')
+names <- c('JNK', 'HYG')
 
-# Extracted from http://www.etf.com
-group1 <- read.csv('data/sdy-holdings.tsv', sep = '\t', col.names = c('name', 'percent'), header = FALSE)
-group2 <- read.csv('data/vym-holdings.tsv', sep = '\t', col.names = c('name', 'percent'), header = FALSE)
+# Analysis of JNK holdings.
+data <- read.csv('data/jnk-holdings.csv', skip=3)
+data <- data[!is.na(data$Coupon),]
 
-# Extracted from http://www.nasdaq.com/symbol/sdy/dividend-history
-div1 <- read.csv('data/sdy-dividends.tsv', sep = '\t', col.names = c('ex', 'type', 'amount', 'declaration', 'record', 'payment'), header = FALSE)
-div2 <- read.csv('data/vym-dividends.tsv', sep = '\t', col.names = c('ex', 'type', 'amount', 'declaration', 'record', 'payment'), header = FALSE)
+# Clean names.
+data$name <- data$Name
+data$name <- sub(' \\d.+', '', data$name)
+data$name <- sub('144A', '', data$name)
+data$name <- trimws(data$name)
+
+data$percent <- data$Weight
+group1 <- data.frame(name = data$name, percent = data$Weight)
+
+data <- read.csv('data/hyg-holdings.csv', skip=10)
+data <- data[1:(nrow(data)-2),]
+data$name <- data$Name
+data$name <- sub('144A', '', data$name)
+data$name <- sub(' \\/ .+', '', data$name)
+data$name <- trimws(data$name)
+
+data$percent <- data$Weight
+group2 <- data.frame(name = data$name, percent = data$Weight)
+
+# Consolidate duplicate rows (same company name, different bond rates), adding weight percents.
+group1 <- aggregate(percent ~ name, data = group1, FUN=sum)
+group2 <- aggregate(percent ~ name, data = group2, FUN=sum)
 
 # Read current stock prices.
 prices <- read.csv(paste0('http://finance.yahoo.com/d/quotes.csv?s=', paste(names, collapse=','), '&f=snl1'), header = FALSE, col.names=c('symbol', 'name', 'price'))
@@ -50,7 +69,7 @@ g <- g + xlab('ETF')
 g <- g + ylab('Total Count of Holdings')
 g <- g + scale_fill_manual(values=c('#303030', '#00bb00'), labels=c('Unique', 'In common'))
 g <- g + theme(legend.title=element_blank())
-g <- g + annotate("text", x = c(1,2), y=c(30, 30), label = c(paste0(round(group1CommonPercent * 100, 2), '%'), paste0(round(group2CommonPercent * 100, 2), '%')), colour = 'white')
+g <- g + annotate("text", x = c(1,2), y=c(400, 365), label = c(paste0(round(group1CommonPercent * 100, 2), '%'), paste0(round(group2CommonPercent * 100, 2), '%')), colour = 'white')
 print(g)
 
 # Build tidy dataset with holding counts and common holding counts.
@@ -94,26 +113,29 @@ plotCommonHoldings <- function(holdingPercents, name1, name2, count = 10) {
 plotCommonHoldings(holdingPercents, names[1], names[2])
 plotCommonHoldings(holdingPercents, names[2], names[1])
 
-# Remove long-term cap gain payouts.
-div1b <- div1[abs(div1$amount - mean(div1$amount)) < 1,]
+percentEnergy <- function(data) {
+  # Find energy holdings.
+  e <- grepl('ENERGY|WIND|OCEAN| OIL |DRILL |HALCON|OCEANICS| OFFSHORE |DRILLING|PETROLEUM| PETRO | COAL ', data$name, ignore.case = TRUE)
+  energy <- data[which(e),]
+  
+  # Percent energy.
+  sum(energy$percent)
+}
 
-div <- data.frame((mean(head(div1b$amount, 3)) / prices[1,]$price) * 4 * 100, (mean(head(div2$amount, 3)) / prices[2,]$price) * 4 * 100, 3)
-div <- rbind(div, c((mean(head(div1b$amount, 6)) / prices[1,]$price) * 4 * 100, (mean(head(div2$amount, 6)) / prices[2,]$price) * 4 * 100, 6))
-div <- rbind(div, c((mean(head(div1b$amount, 12)) / prices[1,]$price) * 4 * 100, (mean(head(div2$amount, 12)) / prices[2,]$price) * 4 * 100, 12))
-names(div) <- c(names, 'range')
+energy1 <- percentEnergy(group1)
+energy2 <- percentEnergy(group2)
+energy <- data.frame(name = names, value = c(energy1, energy2) * 100, variable = factor(0))
+energy <- rbind(energy, data.frame(name = names, value = c(1 - energy1, 1 - energy2) * 100, variable = factor(1)))
 
-divm <- melt(div[1:2])
-divm <- cbind(divm, div[,3])
-names(divm) <- c('ETF', 'Yield', 'Range')
-divm$Range <- as.factor(divm$Range)
-
-g <- ggplot(divm, aes(x = ETF, y = Yield, fill = Range))
-g <- g + geom_bar(alpha=I(.9), stat='identity', position='dodge')
-g <- g + ggtitle('Dividend Yield (3, 6, 12 Month)')
+# Draw bar chart of percent energy.
+g <- ggplot(energy, aes(x = name, y = value, fill = variable))
+g <- g + geom_bar(alpha=I(.9), stat='identity')
+g <- g + ggtitle(paste('Percent Energy:', names[1], 'vs', names[2]))
 g <- g + theme_bw()
 g <- g + theme(plot.title = element_text(size=20, face="bold", vjust=2), axis.text.x = element_text(angle = 45, hjust = 1))
-g <- g + scale_fill_manual(values=c('#303030', '#808080', '#c0c0c0'), labels=c('3', '6', '12'))
-g <- g + annotate("text", x = c(0.7,1.7), y=c(0.5, 0.5), label = c(paste0(round(div[div$range == 3, 1], 2), '%'), paste0(round(div[div$range == 3, 2], 2), '%')), colour = 'white')
-g <- g + annotate("text", x = c(1,2), y=c(0.5, 0.5), label = c(paste0(round(div[div$range == 6, 1], 2), '%'), paste0(round(div[div$range == 6, 2], 2), '%')), colour = 'white')
-g <- g + annotate("text", x = c(1.3,2.3), y=c(0.5, 0.5), label = c(paste0(round(div[div$range == 12, 1], 2), '%'), paste0(round(div[div$range == 12, 2], 2), '%')), colour = 'white')
+g <- g + xlab('ETF')
+g <- g + ylab('Percent of Energy Holdings')
+g <- g + scale_fill_manual(values=c('#00bb00', '#303030'), labels=c('Energy', 'Non-energy'))
+g <- g + theme(legend.title=element_blank())
+g <- g + annotate("text", x = c(1,2), y=c(4, 4), label = c(paste0(round(energy2 * 100, 2), '%'), paste0(round(energy1 * 100, 2), '%')), colour = 'white')
 print(g)
