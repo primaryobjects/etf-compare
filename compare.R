@@ -11,6 +11,7 @@ names <- c('JNK', 'HYG')
 # Analysis of JNK holdings.
 data <- read.csv('data/jnk-holdings.csv', skip=3)
 data <- data[!is.na(data$Coupon),]
+data <- data[data$Name != 'Cash_USD',]
 
 # Clean names.
 data$name <- data$Name
@@ -19,7 +20,7 @@ data$name <- sub('144A', '', data$name)
 data$name <- trimws(data$name)
 
 data$percent <- data$Weight
-group1 <- data.frame(name = data$name, percent = data$Weight)
+group1 <- data.frame(name = data$Identifier, percent = data$Weight, id = data$name)
 
 data <- read.csv('data/hyg-holdings.csv', skip=10)
 data <- data[1:(nrow(data)-2),]
@@ -29,11 +30,11 @@ data$name <- sub(' \\/ .+', '', data$name)
 data$name <- trimws(data$name)
 
 data$percent <- data$Weight
-group2 <- data.frame(name = data$name, percent = data$Weight)
+group2 <- data.frame(name = data$ISIN, percent = data$Weight, id = data$name)
 
 # Consolidate duplicate rows (same company name, different bond rates), adding weight percents.
-group1 <- aggregate(percent ~ name, data = group1, FUN=sum)
-group2 <- aggregate(percent ~ name, data = group2, FUN=sum)
+#group1 <- aggregate(percent ~ name, data = group1, FUN=sum)
+#group2 <- aggregate(percent ~ name, data = group2, FUN=sum)
 
 # Read current stock prices.
 prices <- read.csv(paste0('http://finance.yahoo.com/d/quotes.csv?s=', paste(names, collapse=','), '&f=snl1'), header = FALSE, col.names=c('symbol', 'name', 'price'))
@@ -69,7 +70,7 @@ g <- g + xlab('ETF')
 g <- g + ylab('Total Count of Holdings')
 g <- g + scale_fill_manual(values=c('#303030', '#00bb00'), labels=c('Unique', 'In common'))
 g <- g + theme(legend.title=element_blank())
-g <- g + annotate("text", x = c(1,2), y=c(400, 365), label = c(paste0(round(group1CommonPercent * 100, 2), '%'), paste0(round(group2CommonPercent * 100, 2), '%')), colour = 'white')
+g <- g + annotate("text", x = c(1,2), y=c(450, 725), label = c(paste0(round(group1CommonPercent * 100, 2), '%'), paste0(round(group2CommonPercent * 100, 2), '%')), colour = 'white')
 print(g)
 
 # Build tidy dataset with holding counts and common holding counts.
@@ -85,11 +86,15 @@ plotCommonHoldings <- function(holdingPercents, name1, name2, count = 10) {
   # Order by value decreasing in ggplot. We can do this by setting the factor levels.
   # Confirm by checking levels(x$holding.name). Note the order is different than a regular order() command.
   # See http://rstudio-pubs-static.s3.amazonaws.com/7433_4537ea5073dc4162950abb715f513469.html
+
+  # Since the bond names can be different, copy the names across (name (ISIN) already match).
+  holdingPercents[holdingPercents$name == name2,]$holding.id <- x$holding.id
   
   # First, isolate the group to base the sort on.
   x <- holdingPercents[holdingPercents$name == name1,]
   # Set the sort column as a factor, specifying the levels based upon the value column.
   x$holding.name <- factor(x$holding.name, levels = x$holding.name[order(x$holding.percent, decreasing = TRUE)])
+
   # Append the other group (order no longer matters, since the factor is already set).
   y <- rbind(x, holdingPercents[holdingPercents$name == name2,])
   # Apply the ordered factor to the other group.
@@ -98,7 +103,7 @@ plotCommonHoldings <- function(holdingPercents, name1, name2, count = 10) {
   y <- head(y[order(y$holding.name),], count * 2)
   
   # Draw bar chart of common holdings by percent, decreasing by first group.
-  g <- ggplot(y, aes(x = holding.name, y = holding.percent, fill = name, group = name))
+  g <- ggplot(y, aes(x = holding.id, y = holding.percent, fill = name, group = name))
   g <- g + geom_bar(alpha=I(.9), stat='identity', position='dodge')
   g <- g + ggtitle(paste('Common Holdings:', name1, 'vs', name2))
   g <- g + theme_bw()
@@ -115,7 +120,7 @@ plotCommonHoldings(holdingPercents, names[2], names[1])
 
 percentEnergy <- function(data) {
   # Find energy holdings.
-  e <- grepl('ENERGY|WIND|OCEAN| OIL |DRILL |HALCON|OCEANICS| OFFSHORE |DRILLING|PETROLEUM| PETRO | COAL ', data$name, ignore.case = TRUE)
+  e <- grepl('ENERGY|WIND|OCEAN| OIL |DRILL |HALCON|OCEANICS| OFFSHORE |DRILLING|PETROLEUM| PETRO | COAL ', data$id, ignore.case = TRUE)
   energy <- data[which(e),]
   
   # Percent energy.
