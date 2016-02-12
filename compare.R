@@ -34,7 +34,7 @@ group1missing <- group2[group2$name %in% setdiff(group2$name, group1$name), ]
 group2missing <- group1[group1$name %in% setdiff(group1$name, group2$name), ]
 
 # Build tidy dataset with holding counts and common holding counts.
-holdingCounts <- data.frame(name = 'SDY', count = nrow(group1) - nrow(common), common = nrow(common))
+holdingCounts <- data.frame(name = names[1], count = nrow(group1) - nrow(common), common = nrow(common))
 holdingCounts <- rbind(holdingCounts, data.frame(name = names[2], count = nrow(group2) - nrow(common), common = nrow(common)))
 
 # Transpose the data.frame into a format for plotting with variable colors.                       
