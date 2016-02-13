@@ -5,6 +5,7 @@
 
 library(ggplot2)
 library(reshape2)
+library(RColorBrewer)
 
 names <- c('JNK', 'HYG')
 
@@ -151,15 +152,19 @@ consolidated <- aggregate(percent ~ id, data = consolidated, FUN=sum)
 consolidated$id <- factor(consolidated$id, levels = consolidated$id[order(consolidated$percent, decreasing = TRUE)])
 consolidated <- consolidated[order(consolidated$id),]
 
+colourCount = 50
+getPalette = colorRampPalette(brewer.pal(99, "Paired"))
+
 # Draw bar chart of all holdings, sorted by weight.
-g <- ggplot(head(consolidated, 50), aes(x = id, y = percent))
+g <- ggplot(head(consolidated, 50), aes(x = id, y = percent, fill=id))
 g <- g + geom_bar(alpha=I(.9), stat='identity')
-g <- g + ggtitle(paste('Top 50 Consolidated Holdings for ', names[1]))
+g <- g + ggtitle(paste('Top 50 Consolidated Holdings for', names[1]))
 g <- g + theme_bw()
 g <- g + theme(plot.title = element_text(size=20, face="bold", vjust=2), axis.text.x = element_text(angle = 45, hjust = 1))
-g <- g + xlab('ETF')
+g <- g + xlab('Company')
 g <- g + ylab('Percent %')
-g <- g + theme(legend.title=element_blank())
+g <- g + theme(legend.title=element_blank(), legend.position='none')
+g <- g + scale_fill_manual(values=getPalette(colourCount))
 print(g)
 
 # Note, consolidated total is 99.41155. The remaining percent is cash 0.588456. Total = 100%.
