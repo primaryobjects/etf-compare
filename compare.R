@@ -162,4 +162,4 @@ g <- g + ylab('Percent %')
 g <- g + theme(legend.title=element_blank())
 print(g)
 
-csv.write(consolidated)
+write.csv(consolidated, file=paste0('data/', tolower(names[1]), '-consolidated.csv'))
