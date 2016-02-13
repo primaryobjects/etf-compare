@@ -1,6 +1,6 @@
 #
 # Kory Becker http://primaryobjects.com/kory-becker
-# 12/24/2015
+# 2/12/2016
 #
 
 library(ggplot2)
@@ -39,9 +39,9 @@ group2 <- data.frame(name = data$ISIN, percent = data$Weight, id = data$name)
 # Read current stock prices.
 prices <- read.csv(paste0('http://finance.yahoo.com/d/quotes.csv?s=', paste(names, collapse=','), '&f=snl1'), header = FALSE, col.names=c('symbol', 'name', 'price'))
 
-# Convert percent string to numeric.
-group1$percent <- as.numeric(sub('%', '', group1$percent)) / 100
-group2$percent <- as.numeric(sub('%', '', group2$percent)) / 100
+# Convert weight string to numeric.
+group1$percent <- as.numeric(sub('%', '', group1$percent))
+group2$percent <- as.numeric(sub('%', '', group2$percent))
 
 common <- group1[group1$name %in% intersect(group1$name, group2$name),]
 group1CommonPercent <- nrow(common) / nrow(group1)
@@ -81,26 +81,28 @@ holdingPercents <- rbind(holdingPercents, data.frame(name = names[2], holding = 
 holdingPercents <- holdingPercents[order(holdingPercents$holding.name),]
 
 plotCommonHoldings <- function(holdingPercents, name1, name2, count = 10) {
-  # Plots a chart of common holdings between two funds, in decreasing order according to the first fund.
+  # Plots a chart of common holdings between two bond funds, in decreasing order according to the first fund.
   
   # Order by value decreasing in ggplot. We can do this by setting the factor levels.
   # Confirm by checking levels(x$holding.name). Note the order is different than a regular order() command.
   # See http://rstudio-pubs-static.s3.amazonaws.com/7433_4537ea5073dc4162950abb715f513469.html
 
-  # Since the bond names can be different, copy the names across (name (ISIN) already match).
-  holdingPercents[holdingPercents$name == name2,]$holding.id <- x$holding.id
-  
-  # First, isolate the group to base the sort on.
+  # Since the bond names can be different across funds, copy the names across by matching ISIN (holding.name). Since these are common holdings, there will always be a matching ISIN between funds.
+  holdingPercents[holdingPercents$name == name2,]$holding.id <- holdingPercents[holdingPercents$name == name1,]$holding.id
+  # Group the same company's bonds together under 1 company name, separated by fund.
+  holdingPercents <- aggregate(holding.percent ~ holding.id + name, data = holdingPercents, FUN=sum)
+
+  # Next, isolate the group to base the sort on.
   x <- holdingPercents[holdingPercents$name == name1,]
   # Set the sort column as a factor, specifying the levels based upon the value column.
-  x$holding.name <- factor(x$holding.name, levels = x$holding.name[order(x$holding.percent, decreasing = TRUE)])
+  x$holding.id <- factor(x$holding.id, levels = x$holding.id[order(x$holding.percent, decreasing = TRUE)])
 
   # Append the other group (order no longer matters, since the factor is already set).
   y <- rbind(x, holdingPercents[holdingPercents$name == name2,])
   # Apply the ordered factor to the other group.
-  y$holding.name <- x$holding.name
+  y$holding.id <- x$holding.id
   # Limit to the first 20 results of the distinct groups. Note, plot order is already defined by the factor levels.
-  y <- head(y[order(y$holding.name),], count * 2)
+  y <- head(y[order(y$holding.id),], count * 2)
   
   # Draw bar chart of common holdings by percent, decreasing by first group.
   g <- ggplot(y, aes(x = holding.id, y = holding.percent, fill = name, group = name))
@@ -108,7 +110,7 @@ plotCommonHoldings <- function(holdingPercents, name1, name2, count = 10) {
   g <- g + ggtitle(paste('Common Holdings:', name1, 'vs', name2))
   g <- g + theme_bw()
   g <- g + theme(plot.title = element_text(size=20, face="bold", vjust=2), axis.text.x = element_text(angle = 45, hjust = 1))
-  g <- g + xlab('Holdings')
+  g <- g + xlab('Aggregated Holdings')
   g <- g + ylab('Percent %')
   g <- g + scale_fill_manual(values=c('#303030', '#808080'))
   g <- g + theme(legend.title=element_blank())
@@ -129,8 +131,8 @@ percentEnergy <- function(data) {
 
 energy1 <- percentEnergy(group1)
 energy2 <- percentEnergy(group2)
-energy <- data.frame(name = names, value = c(energy1, energy2) * 100, variable = factor(0))
-energy <- rbind(energy, data.frame(name = names, value = c(1 - energy1, 1 - energy2) * 100, variable = factor(1)))
+energy <- data.frame(name = names, value = c(energy1, energy2), variable = factor(0))
+energy <- rbind(energy, data.frame(name = names, value = c(100 - energy1, 100 - energy2), variable = factor(1)))
 
 # Draw bar chart of percent energy.
 g <- ggplot(energy, aes(x = name, y = value, fill = variable))
@@ -142,5 +144,5 @@ g <- g + xlab('ETF')
 g <- g + ylab('Percent of Energy Holdings')
 g <- g + scale_fill_manual(values=c('#00bb00', '#303030'), labels=c('Energy', 'Non-energy'))
 g <- g + theme(legend.title=element_blank())
-g <- g + annotate("text", x = c(1,2), y=c(4, 4), label = c(paste0(round(energy2 * 100, 2), '%'), paste0(round(energy1 * 100, 2), '%')), colour = 'white')
+g <- g + annotate("text", x = c(1,2), y=c(4, 4), label = c(paste0(round(energy2, 2), '%'), paste0(round(energy1, 2), '%')), colour = 'white')
 print(g)
