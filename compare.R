@@ -32,10 +32,6 @@ data$name <- trimws(data$name)
 data$percent <- data$Weight
 group2 <- data.frame(name = data$ISIN, percent = data$Weight, id = data$name)
 
-# Consolidate duplicate rows (same company name, different bond rates), adding weight percents.
-#group1 <- aggregate(percent ~ name, data = group1, FUN=sum)
-#group2 <- aggregate(percent ~ name, data = group2, FUN=sum)
-
 # Read current stock prices.
 prices <- read.csv(paste0('http://finance.yahoo.com/d/quotes.csv?s=', paste(names, collapse=','), '&f=snl1'), header = FALSE, col.names=c('symbol', 'name', 'price'))
 
@@ -146,3 +142,24 @@ g <- g + scale_fill_manual(values=c('#00bb00', '#303030'), labels=c('Energy', 'N
 g <- g + theme(legend.title=element_blank())
 g <- g + annotate("text", x = c(1,2), y=c(4, 4), label = c(paste0(round(energy2, 2), '%'), paste0(round(energy1, 2), '%')), colour = 'white')
 print(g)
+
+# Consolidate duplicate rows (same company name, different bond rates), adding weight percents.
+consolidated <- group1
+consolidated$id <- group1[group1$name == consolidated$name,]$id
+consolidated <- aggregate(percent ~ id, data = consolidated, FUN=sum)
+# Set sort order for plot by percent.
+consolidated$id <- factor(consolidated$id, levels = consolidated$id[order(consolidated$percent, decreasing = TRUE)])
+consolidated <- consolidated[order(consolidated$id),]
+
+# Draw bar chart of all holdings, sorted by weight.
+g <- ggplot(head(consolidated, 50), aes(x = id, y = percent))
+g <- g + geom_bar(alpha=I(.9), stat='identity')
+g <- g + ggtitle(paste('Top 50 Consolidated Holdings for ', names[1]))
+g <- g + theme_bw()
+g <- g + theme(plot.title = element_text(size=20, face="bold", vjust=2), axis.text.x = element_text(angle = 45, hjust = 1))
+g <- g + xlab('ETF')
+g <- g + ylab('Percent %')
+g <- g + theme(legend.title=element_blank())
+print(g)
+
+csv.write(consolidated)
