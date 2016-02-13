@@ -17,7 +17,7 @@ The included charts provide a high-level overview of how similar two ETF funds a
 
 ![Consolidated holdings for JNK (bonds merged by company name)](https://raw.githubusercontent.com/primaryobjects/etf-compare/jnk-vs-hyg/images/plot5.png)
 
-[Consolidated holdings for JNK](https://raw.githubusercontent.com/primaryobjects/etf-compare/blob/jnk-vs-hyg/data/jnk-consolidated.csv)
+[Consolidated holdings for JNK](https://github.com/primaryobjects/etf-compare/blob/jnk-vs-hyg/data/jnk-consolidated.csv) (individual bonds merged by company name)
 
 License
 ----
