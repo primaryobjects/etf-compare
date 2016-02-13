@@ -162,4 +162,5 @@ g <- g + ylab('Percent %')
 g <- g + theme(legend.title=element_blank())
 print(g)
 
+# Note, consolidated total is 99.41155. The remaining percent is cash 0.588456. Total = 100%.
 write.csv(consolidated, file=paste0('data/', tolower(names[1]), '-consolidated.csv'))
