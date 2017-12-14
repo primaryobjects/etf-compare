@@ -57,6 +57,7 @@ holdingCounts <- melt(holdingCounts)
 # Draw bar chart of common holdings.
 g <- ggplot(holdingCounts, aes(x = name, y = value, fill = variable))
 g <- g + geom_bar(alpha=I(.9), stat='identity')
+g <- g + geom_col(position = position_stack(reverse = TRUE))
 g <- g + ggtitle(paste('Common Holdings:', names[1], 'vs', names[2]))
 g <- g + theme_bw()
 g <- g + theme(plot.title = element_text(size=20, face="bold", vjust=2), axis.text.x = element_text(angle = 45, hjust = 1))
@@ -64,7 +65,7 @@ g <- g + xlab('ETF')
 g <- g + ylab('Total Count of Holdings')
 g <- g + scale_fill_manual(values=c('#303030', '#00bb00'), labels=c('Unique', 'In common'))
 g <- g + theme(legend.title=element_blank())
-g <- g + annotate("text", x = c(1,2), y=c(30, 30), label = c(paste0(round(group1CommonPercent * 100, 2), '%'), paste0(round(group2CommonPercent * 100, 2), '%')), colour = 'white')
+g <- g + annotate("text", x = c(1,2), y=c(80, 380), label = c(paste0(round(group1CommonPercent * 100, 2), '%'), paste0(round(group2CommonPercent * 100, 2), '%')), colour = 'white')
 print(g)
 
 # Build tidy dataset with holding counts and common holding counts.
