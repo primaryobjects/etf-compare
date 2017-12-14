@@ -9,7 +9,7 @@ library(RColorBrewer)
 
 names <- c('JNK', 'HYG')
 
-# Analysis of JNK holdings.
+# Downloaded from https://us.spdrs.com/site-content/xls/JNK_All_Holdings.xls?fund=JNK&docname=All+Holdings
 data <- read.csv('data/jnk-holdings.csv', skip=3)
 data <- data[!is.na(data$Coupon),]
 data <- data[data$Name != 'Cash_USD',]
@@ -23,6 +23,7 @@ data$name <- trimws(data$name)
 data$percent <- data$Weight
 group1 <- data.frame(name = data$Identifier, percent = data$Weight, id = data$name)
 
+# Downloaded from https://www.ishares.com/us/products/239565/ishares-iboxx-high-yield-corporate-bond-etf/1467271812596.ajax?fileType=csv&fileName=HYG_holdings&dataType=fund
 data <- read.csv('data/hyg-holdings.csv', skip=10)
 data <- data[1:(nrow(data)-2),]
 data$name <- data$Name
