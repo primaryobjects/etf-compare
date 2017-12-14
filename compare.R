@@ -1,6 +1,6 @@
 #
 # Kory Becker http://primaryobjects.com/kory-becker
-# 2/12/2016
+# 12/14/2017
 #
 
 library(ggplot2)
@@ -33,9 +33,6 @@ data$name <- trimws(data$name)
 data$percent <- data$Weight
 group2 <- data.frame(name = data$ISIN, percent = data$Weight, id = data$name)
 
-# Read current stock prices.
-prices <- read.csv(paste0('http://finance.yahoo.com/d/quotes.csv?s=', paste(names, collapse=','), '&f=snl1'), header = FALSE, col.names=c('symbol', 'name', 'price'))
-
 # Convert weight string to numeric.
 group1$percent <- as.numeric(sub('%', '', group1$percent))
 group2$percent <- as.numeric(sub('%', '', group2$percent))
@@ -60,6 +57,7 @@ holdingCounts <- melt(holdingCounts)
 # Draw bar chart of common holdings.
 g <- ggplot(holdingCounts, aes(x = name, y = value, fill = variable))
 g <- g + geom_bar(alpha=I(.9), stat='identity')
+g <- g + geom_col(position = position_stack(reverse = TRUE))
 g <- g + ggtitle(paste('Common Holdings:', names[1], 'vs', names[2]))
 g <- g + theme_bw()
 g <- g + theme(plot.title = element_text(size=20, face="bold", vjust=2), axis.text.x = element_text(angle = 45, hjust = 1))
@@ -67,7 +65,7 @@ g <- g + xlab('ETF')
 g <- g + ylab('Total Count of Holdings')
 g <- g + scale_fill_manual(values=c('#303030', '#00bb00'), labels=c('Unique', 'In common'))
 g <- g + theme(legend.title=element_blank())
-g <- g + annotate("text", x = c(1,2), y=c(450, 725), label = c(paste0(round(group1CommonPercent * 100, 2), '%'), paste0(round(group2CommonPercent * 100, 2), '%')), colour = 'white')
+g <- g + annotate("text", x = c(1,2), y=c(450, 420), label = c(paste0(round(group1CommonPercent * 100, 2), '%'), paste0(round(group2CommonPercent * 100, 2), '%')), colour = 'white')
 print(g)
 
 # Build tidy dataset with holding counts and common holding counts.
@@ -134,6 +132,7 @@ energy <- rbind(energy, data.frame(name = names, value = c(100 - energy1, 100 - 
 # Draw bar chart of percent energy.
 g <- ggplot(energy, aes(x = name, y = value, fill = variable))
 g <- g + geom_bar(alpha=I(.9), stat='identity')
+g <- g + geom_col(position = position_stack(reverse = TRUE))
 g <- g + ggtitle(paste('Percent Energy:', names[1], 'vs', names[2]))
 g <- g + theme_bw()
 g <- g + theme(plot.title = element_text(size=20, face="bold", vjust=2), axis.text.x = element_text(angle = 45, hjust = 1))
