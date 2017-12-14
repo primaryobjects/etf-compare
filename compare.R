@@ -5,6 +5,9 @@
 
 library(ggplot2)
 library(reshape2)
+library(RCurl)
+library(XML)
+library(stringr)
 
 names <- c('SDY', 'VYM')
 
@@ -13,11 +16,22 @@ group1 <- read.csv('data/sdy-holdings.tsv', sep = '\t', col.names = c('name', 'p
 group2 <- read.csv('data/vym-holdings.tsv', sep = '\t', col.names = c('name', 'percent'), header = FALSE)
 
 # Extracted from http://www.nasdaq.com/symbol/sdy/dividend-history
-div1 <- read.csv('data/sdy-dividends.tsv', sep = '\t', col.names = c('ex', 'type', 'amount', 'declaration', 'record', 'payment'), header = FALSE)
-div2 <- read.csv('data/vym-dividends.tsv', sep = '\t', col.names = c('ex', 'type', 'amount', 'declaration', 'record', 'payment'), header = FALSE)
+div1 <- read.csv('data/sdy-dividends.csv', col.names = c('date', 'amount'), header = T)
+div1 <- div1[order(as.Date(div1$date), decreasing=T),]
+div2 <- read.csv('data/vym-dividends.csv', col.names = c('date', 'amount'), header = T)
+div2 <- div2[order(as.Date(div2$date), decreasing=T),]
 
 # Read current stock prices.
-prices <- read.csv(paste0('http://finance.yahoo.com/d/quotes.csv?s=', paste(names, collapse=','), '&f=snl1'), header = FALSE, col.names=c('symbol', 'name', 'price'))
+prices <- t(sapply(names, function(name) {
+  webpage <- getURL(paste0('https://finance.yahoo.com/quote/', name), .opts = list(ssl.verifypeer = FALSE))
+  webpage <- readLines(tc <- textConnection(webpage))
+  close(tc)
+  html <- htmlTreeParse(webpage, useInternalNodes = T)
+  
+  priceElement <- xpathSApply(html, '//div[@id="quote-header-info"]', xmlValue)
+  
+  list(symbol=name, price=as.numeric(str_extract(priceElement, "([0-9]+\\.[0-9]+)")))
+}))
 
 # Convert percent string to numeric.
 group1$percent <- as.numeric(sub('%', '', group1$percent)) / 100
